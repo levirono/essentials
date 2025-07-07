@@ -1,3 +1,4 @@
+import 'package:essentials/UI/sentence_analyzer.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import '../features/pdf_reader.dart';
@@ -96,6 +97,7 @@ class HomePage extends StatelessWidget {
                   children: [
                     _buildFeatureButton(context, Icons.analytics, 'Notes'),
                     _buildFeatureButton(context, Icons.task_alt, 'Tasks'),
+                    _buildFeatureButton(context, Icons.text_snippet, 'Sentence Analyzer'),
                   ],
                 ),
               ),
@@ -115,6 +117,12 @@ class HomePage extends StatelessWidget {
       children: [
         ElevatedButton(
           onPressed: () {
+            if (label == 'Sentence Analyzer') {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => SentenceAnalyzerPage()),
+              );
+            }
             // if (label == 'Notes') {
             //   Navigator.push(
             //     context,
