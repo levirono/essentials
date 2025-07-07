@@ -30,6 +30,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_sharing_intent: ^2.0.0
   receive_sharing_intent: ^1.4.5
 
   # The following adds the Cupertino Icons font to your application.
