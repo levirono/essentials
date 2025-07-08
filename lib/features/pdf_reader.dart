@@ -45,21 +45,50 @@ class _PdfReaderPageState extends State<PdfReaderPage> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: _onInteraction,
       child: Scaffold(
         extendBodyBehindAppBar: true,
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          title: const Text(
-            'PDF Reader',
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
+        appBar: PreferredSize(
+          preferredSize: Size.fromHeight(70),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(24),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: colorScheme.primary.withOpacity(0.7),
+                  boxShadow: [
+                    BoxShadow(
+                      color: colorScheme.primary.withOpacity(0.2),
+                      blurRadius: 16,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                  border: Border.all(
+                    color: colorScheme.secondary.withOpacity(0.2),
+                    width: 1.5,
+                  ),
+                ),
+                child: AppBar(
+                  backgroundColor: Colors.transparent,
+                  elevation: 0,
+                  title: const Text(
+                    'PDF Reader',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 24,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                  centerTitle: true,
+                  iconTheme: IconThemeData(color: Colors.white),
+                ),
+              ),
             ),
           ),
-          iconTheme: IconThemeData(color: Colors.white),
         ),
         body: Stack(
           children: [
@@ -69,10 +98,9 @@ class _PdfReaderPageState extends State<PdfReaderPage> {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    Colors.green.shade500,
-                    Colors.blue.shade600,
-                    Colors.grey.shade900,
-                    Colors.black,
+                    colorScheme.primary.withOpacity(0.7),
+                    colorScheme.secondary.withOpacity(0.7),
+                    colorScheme.background,
                   ],
                 ),
               ),
@@ -124,22 +152,22 @@ class _PdfReaderPageState extends State<PdfReaderPage> {
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         IconButton(
-                          icon: Icon(Icons.zoom_in, color: Colors.green.shade700),
+                          icon: Icon(Icons.zoom_in, color: colorScheme.primary),
                           onPressed: _onInteraction,
                           tooltip: 'Zoom In',
                         ),
                         IconButton(
-                          icon: Icon(Icons.zoom_out, color: Colors.red.shade700),
+                          icon: Icon(Icons.zoom_out, color: colorScheme.secondary),
                           onPressed: _onInteraction,
                           tooltip: 'Zoom Out',
                         ),
                         IconButton(
-                          icon: Icon(Icons.bookmark, color: Colors.blue.shade700),
+                          icon: Icon(Icons.bookmark, color: colorScheme.primary),
                           onPressed: _onInteraction,
                           tooltip: 'Bookmark',
                         ),
                         IconButton(
-                          icon: Icon(Icons.settings, color: Colors.grey.shade700),
+                          icon: Icon(Icons.settings, color: colorScheme.secondary),
                           onPressed: _onInteraction,
                           tooltip: 'Settings',
                         ),

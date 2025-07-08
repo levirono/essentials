@@ -58,8 +58,44 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       title: 'One',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme(
+          brightness: Brightness.light,
+          primary: Color(0xFF43A047), // Green
+          onPrimary: Colors.white,
+          secondary: Color(0xFF1E88E5), // Blue
+          onSecondary: Colors.white,
+          background: Color(0xFFF5F5F5), // Light gray
+          onBackground: Colors.black,
+          surface: Colors.white,
+          onSurface: Colors.black,
+          error: Colors.red,
+          onError: Colors.white,
+        ),
+        scaffoldBackgroundColor: Color(0xFFF5F5F5),
         useMaterial3: true,
+        fontFamily: 'Roboto',
+        appBarTheme: AppBarTheme(
+          backgroundColor: Color(0xFF43A047),
+          foregroundColor: Colors.white,
+          elevation: 0,
+        ),
+        cardTheme: CardTheme(
+          color: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          elevation: 4,
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Color(0xFF1E88E5),
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            textStyle: TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
       ),
       home:
           _sharedPdfPath != null
