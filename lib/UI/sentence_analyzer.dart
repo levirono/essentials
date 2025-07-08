@@ -13,36 +13,38 @@ class SentenceAnalyzerPage extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(24),
-            child: Container(
-              decoration: BoxDecoration(
-                color: colorScheme.primary.withOpacity(0.7),
-                boxShadow: [
-                  BoxShadow(
-                    color: colorScheme.primary.withOpacity(0.2),
-                    blurRadius: 16,
-                    offset: Offset(0, 4),
-                  ),
-                ],
-                border: Border.all(
-                  color: colorScheme.secondary.withOpacity(0.2),
-                  width: 1.5,
-                ),
-                backdropFilter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-              ),
-              child: AppBar(
-                backgroundColor: Colors.transparent,
-                elevation: 0,
-                title: Text(
-                  'Sentence Analyzer',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 24,
-                    letterSpacing: 1.2,
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: colorScheme.primary.withOpacity(0.7),
+                  boxShadow: [
+                    BoxShadow(
+                      color: colorScheme.primary.withOpacity(0.2),
+                      blurRadius: 16,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                  border: Border.all(
+                    color: colorScheme.secondary.withOpacity(0.2),
+                    width: 1.5,
                   ),
                 ),
-                centerTitle: true,
-                iconTheme: IconThemeData(color: Colors.white),
+                child: AppBar(
+                  backgroundColor: Colors.transparent,
+                  elevation: 0,
+                  title: Text(
+                    'Sentence Analyzer',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 24,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                  centerTitle: true,
+                  iconTheme: IconThemeData(color: Colors.white),
+                ),
               ),
             ),
           ),
