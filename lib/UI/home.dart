@@ -2,6 +2,7 @@ import 'package:essentials/UI/sentence_analyzer.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import '../features/pdf_reader.dart';
+import 'package:share_plus/share_plus.dart';
 // import 'notes/notes_page.dart';
 // import 'todos/todo_page.dart';
 // import 'community/cummunity_page.dart';
@@ -81,6 +82,21 @@ class HomePage extends StatelessWidget {
                         },
                         icon: Icon(Icons.picture_as_pdf),
                         label: Text('Open PDF'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: Colors.purple.shade800,
+                        ),
+                      ),
+                      SizedBox(height: 10),
+                      ElevatedButton.icon(
+                        onPressed: () async {
+                          FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['pdf']);
+                          if (result != null && result.files.single.path != null) {
+                            await Share.shareXFiles([XFile(result.files.single.path!)]);
+                          }
+                        },
+                        icon: Icon(Icons.share),
+                        label: Text('Share PDF'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white,
                           foregroundColor: Colors.purple.shade800,

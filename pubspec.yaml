@@ -30,14 +30,13 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flutter_sharing_intent: ^2.0.0
-  receive_sharing_intent: ^1.4.5
-
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
   syncfusion_flutter_pdfviewer: ^30.1.38
   file_picker: ^8.0.3
+  share_plus: ^11.0.0
+  flutter_sharing_intent: ^1.1.1
 
 dev_dependencies:
   flutter_test:

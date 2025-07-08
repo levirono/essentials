@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
-import 'UI/home.dart';
-import 'features/pdf_reader.dart';
 import 'dart:async';
-import 'package:receive_sharing_intent/receive_sharing_intent.dart';
-import 'dart:io';
+import 'package:flutter_sharing_intent/flutter_sharing_intent.dart';
+import 'package:flutter_sharing_intent/model/sharing_file.dart';
+import 'features/pdf_reader.dart';
+import 'UI/home.dart';
 
-void main() => runApp(const MyApp());
+void main() {
+  runApp(const MyApp());
+}
 
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
@@ -15,43 +17,40 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  StreamSubscription? _intentSub;
+  late StreamSubscription _intentDataStreamSubscription;
   String? _sharedPdfPath;
 
   @override
   void initState() {
     super.initState();
     // Listen for shared files while app is in memory
-    _intentSub = ReceiveSharingIntent.instance.getMediaStream().listen(
-      (List<SharedMediaFile> value) {
-        if (value.isNotEmpty && value[0].path.toLowerCase().endsWith('.pdf')) {
-          setState(() {
-            _sharedPdfPath = value[0].path;
-          });
-        }
-      },
-      onError: (err) {
-        // Handle error if needed
-      },
-    );
+    _intentDataStreamSubscription = FlutterSharingIntent.instance
+        .getMediaStream()
+        .listen(
+          (List<SharedFile> value) {
+            if (value.isNotEmpty &&
+                value[0].value != null &&
+                value[0].value!.toLowerCase().endsWith('.pdf')) {
+              setState(() {
+                _sharedPdfPath = value[0].value;
+              });
+            }
+          },
+          onError: (err) {
+            print("getMediaStream error: $err");
+          },
+        );
+
     // Listen for shared files when app is launched
-    ReceiveSharingIntent.instance.getInitialMedia().then((
-      List<SharedMediaFile> value,
+    FlutterSharingIntent.instance.getInitialSharing().then((
+      List<SharedFile> value,
     ) {
-      if (value.isNotEmpty && value[0].path.toLowerCase().endsWith('.pdf')) {
+      if (value.isNotEmpty && value[0].value!.toLowerCase().endsWith('.pdf')) {
         setState(() {
-          _sharedPdfPath = value[0].path;
+          _sharedPdfPath = value[0].value;
         });
       }
-      // Reset after processing
-      ReceiveSharingIntent.instance.reset();
     });
-  }
-
-  @override
-  void dispose() {
-    _intentSub?.cancel();
-    super.dispose();
   }
 
   @override
@@ -67,5 +66,11 @@ class _MyAppState extends State<MyApp> {
               ? PdfReaderPage(filePath: _sharedPdfPath!)
               : HomePage(),
     );
+  }
+
+  @override
+  void dispose() {
+    _intentDataStreamSubscription.cancel();
+    super.dispose();
   }
 }
