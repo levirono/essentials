@@ -26,7 +26,7 @@ class SentenceAnalyzerPage extends StatelessWidget {
                     ),
                   ],
                   border: Border.all(
-                    color: colorScheme.secondary.withOpacity(0.2),
+                    color: colorScheme.secondary.withValues(red: 0.4),
                     width: 1.5,
                   ),
                 ),

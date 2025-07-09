@@ -116,7 +116,7 @@ class HomePage extends StatelessWidget {
                 ),
                 SizedBox(height: 32),
                 Text(
-                  'Made with Flutter',
+                  'Made by lev',
                   style: TextStyle(color: colorScheme.onBackground.withOpacity(0.5)),
                 ),
               ],
