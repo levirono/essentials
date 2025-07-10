@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import 'dart:io';
 import 'dart:async';
+import '../database_helper.dart';
 
 class PdfReaderPage extends StatefulWidget {
   final String filePath;
-  const PdfReaderPage({Key? key, required this.filePath}) : super(key: key);
+  final int? initialPage;
+  const PdfReaderPage({Key? key, required this.filePath, this.initialPage})
+    : super(key: key);
 
   @override
   State<PdfReaderPage> createState() => _PdfReaderPageState();
@@ -27,12 +30,36 @@ class _PdfReaderPageState extends State<PdfReaderPage> {
   @override
   void initState() {
     super.initState();
-    // UI is visible at start, but will hide on first tap/scroll
+    if (widget.initialPage != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _pdfController.jumpToPage(widget.initialPage! + 1);
+      });
+    }
+    // Save to recent PDFs on open
+    _saveRecentPdf();
+    // Listen for page changes
+    _pdfController.addListener(_onPageChanged);
+  }
+
+  void _onPageChanged() {
+    _saveRecentPdf();
+  }
+
+  void _saveRecentPdf() async {
+    final page = _pdfController.pageNumber - 1;
+    await DatabaseHelper().insertOrUpdateRecentPdf(
+      RecentPdf(
+        filePath: widget.filePath,
+        lastPage: page < 0 ? 0 : page,
+        lastOpened: DateTime.now(),
+      ),
+    );
   }
 
   @override
   void dispose() {
     _hideTimer?.cancel();
+    _pdfController.removeListener(_onPageChanged);
     _pdfController.dispose();
     super.dispose();
   }

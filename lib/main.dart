@@ -4,6 +4,7 @@ import 'package:flutter_sharing_intent/flutter_sharing_intent.dart';
 import 'package:flutter_sharing_intent/model/sharing_file.dart';
 import 'features/pdf_reader.dart';
 import 'UI/home.dart';
+import 'UI/recent_pdfs.dart';
 
 void main() {
   runApp(const MyApp());
@@ -97,10 +98,26 @@ class _MyAppState extends State<MyApp> {
           ),
         ),
       ),
-      home:
-          _sharedPdfPath != null
-              ? PdfReaderPage(filePath: _sharedPdfPath!)
-              : HomePage(),
+      routes: {'/recent_pdfs': (context) => const RecentPdfsPage()},
+      home: Builder(
+        builder: (context) {
+          if (_sharedPdfPath != null) {
+            // Use a Future to push PdfReaderPage and clear the path after pop
+            Future.microtask(() async {
+              final path = _sharedPdfPath;
+              setState(() => _sharedPdfPath = null);
+              await Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => PdfReaderPage(filePath: path!),
+                ),
+              );
+            });
+            return const SizedBox.shrink(); // Placeholder while navigating
+          } else {
+            return HomePage();
+          }
+        },
+      ),
     );
   }
 

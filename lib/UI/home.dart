@@ -34,7 +34,11 @@ class HomePage extends StatelessWidget {
                     padding: const EdgeInsets.all(24.0),
                     child: Column(
                       children: [
-                        Icon(Icons.filter_1, size: 64, color: colorScheme.primary),
+                        Icon(
+                          Icons.filter_1,
+                          size: 64,
+                          color: colorScheme.primary,
+                        ),
                         SizedBox(height: 16),
                         Text(
                           'Welcome to One',
@@ -47,21 +51,42 @@ class HomePage extends StatelessWidget {
                         SizedBox(height: 8),
                         Text(
                           'Your All-in-One Platform',
-                          style: TextStyle(fontSize: 18, color: colorScheme.secondary),
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: colorScheme.secondary,
+                          ),
                         ),
                         SizedBox(height: 24),
                         Text(
                           'Explore our features to discover how One can simplify your life.',
                           textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 16, color: colorScheme.onSurface.withOpacity(0.7)),
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: colorScheme.onSurface.withOpacity(0.7),
+                          ),
                         ),
                         SizedBox(height: 24),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
-                            _buildFeatureButton(context, Icons.analytics, 'Notes', colorScheme),
-                            _buildFeatureButton(context, Icons.task_alt, 'Tasks', colorScheme),
-                            _buildFeatureButton(context, Icons.text_snippet, 'Sentence Analyzer', colorScheme),
+                            _buildFeatureButton(
+                              context,
+                              Icons.analytics,
+                              'Notes',
+                              colorScheme,
+                            ),
+                            _buildFeatureButton(
+                              context,
+                              Icons.task_alt,
+                              'Tasks',
+                              colorScheme,
+                            ),
+                            _buildFeatureButton(
+                              context,
+                              Icons.text_snippet,
+                              'Sentence Analyzer',
+                              colorScheme,
+                            ),
                           ],
                         ),
                       ],
@@ -75,12 +100,20 @@ class HomePage extends StatelessWidget {
                     Expanded(
                       child: ElevatedButton.icon(
                         onPressed: () async {
-                          FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['pdf']);
-                          if (result != null && result.files.single.path != null) {
+                          FilePickerResult? result = await FilePicker.platform
+                              .pickFiles(
+                                type: FileType.custom,
+                                allowedExtensions: ['pdf'],
+                              );
+                          if (result != null &&
+                              result.files.single.path != null) {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => PdfReaderPage(filePath: result.files.single.path!),
+                                builder:
+                                    (context) => PdfReaderPage(
+                                      filePath: result.files.single.path!,
+                                    ),
                               ),
                             );
                           }
@@ -98,9 +131,16 @@ class HomePage extends StatelessWidget {
                     Expanded(
                       child: ElevatedButton.icon(
                         onPressed: () async {
-                          FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['pdf']);
-                          if (result != null && result.files.single.path != null) {
-                            await Share.shareXFiles([XFile(result.files.single.path!)]);
+                          FilePickerResult? result = await FilePicker.platform
+                              .pickFiles(
+                                type: FileType.custom,
+                                allowedExtensions: ['pdf'],
+                              );
+                          if (result != null &&
+                              result.files.single.path != null) {
+                            await Share.shareXFiles([
+                              XFile(result.files.single.path!),
+                            ]);
                           }
                         },
                         icon: Icon(Icons.share),
@@ -115,9 +155,35 @@ class HomePage extends StatelessWidget {
                   ],
                 ),
                 SizedBox(height: 32),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/recent_pdfs');
+                  },
+                  icon: Icon(Icons.history, color: colorScheme.primary),
+                  label: Text(
+                    'Recently Viewed PDFs',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.primary,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: colorScheme.primary,
+                    elevation: 6,
+                    padding: EdgeInsets.symmetric(vertical: 18, horizontal: 24),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 32),
                 Text(
                   'Made by lev',
-                  style: TextStyle(color: colorScheme.onBackground.withOpacity(0.5)),
+                  style: TextStyle(
+                    color: colorScheme.onBackground.withOpacity(0.5),
+                  ),
                 ),
               ],
             ),
@@ -127,7 +193,12 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _buildFeatureButton(BuildContext context, IconData icon, String label, ColorScheme colorScheme) {
+  Widget _buildFeatureButton(
+    BuildContext context,
+    IconData icon,
+    String label,
+    ColorScheme colorScheme,
+  ) {
     return Column(
       children: [
         Material(
@@ -140,7 +211,9 @@ class HomePage extends StatelessWidget {
               if (label == 'Sentence Analyzer') {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => SentenceAnalyzerPage()),
+                  MaterialPageRoute(
+                    builder: (context) => SentenceAnalyzerPage(),
+                  ),
                 );
               }
               // Add navigation for Notes and Tasks as needed
@@ -152,7 +225,14 @@ class HomePage extends StatelessWidget {
           ),
         ),
         SizedBox(height: 8),
-        Text(label, style: TextStyle(color: colorScheme.primary, fontSize: 14, fontWeight: FontWeight.w600)),
+        Text(
+          label,
+          style: TextStyle(
+            color: colorScheme.primary,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ],
     );
   }
