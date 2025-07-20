@@ -219,7 +219,7 @@ class _RecentPdfsPageState extends State<RecentPdfsPage> {
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
-                                    'Viewed: ${pdf.lastOpened}',
+                                    'Opened: ${pdf.lastOpened}',
                                     style: TextStyle(
                                       fontSize: 13,
                                       color: Colors.grey[500],
