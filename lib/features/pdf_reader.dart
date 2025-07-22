@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import 'dart:io';
 import 'dart:async';
@@ -25,6 +26,10 @@ class _PdfReaderPageState extends State<PdfReaderPage> {
   PdfTextSearchResult? _searchResult;
   String _searchQuery = '';
 
+  // Add gesture tracking variables
+  double _lastPanScale = 1.0;
+  Offset _lastFocalPoint = Offset.zero;
+
   void _hideUI() {
     setState(() {
       _showToolbar = false;
@@ -49,6 +54,15 @@ class _PdfReaderPageState extends State<PdfReaderPage> {
   @override
   void initState() {
     super.initState();
+
+    // Set preferred orientations to allow all orientations
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
+
     if (widget.initialPage != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _pdfController.jumpToPage(widget.initialPage! + 1);
@@ -84,14 +98,14 @@ class _PdfReaderPageState extends State<PdfReaderPage> {
 
   void _zoomIn() {
     setState(() {
-      _zoomLevel += 0.25;
+      _zoomLevel = (_zoomLevel + 0.25).clamp(0.5, 5.0);
       _pdfController.zoomLevel = _zoomLevel;
     });
   }
 
   void _zoomOut() {
     setState(() {
-      _zoomLevel = (_zoomLevel - 0.25).clamp(1.0, 5.0);
+      _zoomLevel = (_zoomLevel - 0.25).clamp(0.5, 5.0);
       _pdfController.zoomLevel = _zoomLevel;
     });
   }
@@ -248,12 +262,19 @@ class _PdfReaderPageState extends State<PdfReaderPage> {
     _hideTimer?.cancel();
     _pdfController.removeListener(_onPageChanged);
     _pdfController.dispose();
+
+    // Reset orientation preferences when leaving the page
+    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
+
     return GestureDetector(
       onTap: () {
         if (!_showToolbar && !_showAppBar) {
@@ -265,19 +286,39 @@ class _PdfReaderPageState extends State<PdfReaderPage> {
         _resetHideTimer();
       },
       onPanDown: (_) => _resetHideTimer(),
+      onScaleStart: (details) {
+        _lastPanScale = _zoomLevel;
+        _lastFocalPoint = details.focalPoint;
+        _resetHideTimer();
+      },
+      onScaleUpdate: (details) {
+        // Handle pinch-to-zoom
+        if (details.scale != 1.0) {
+          setState(() {
+            _zoomLevel = (_lastPanScale * details.scale).clamp(0.5, 5.0);
+            _pdfController.zoomLevel = _zoomLevel;
+          });
+        }
+        _resetHideTimer();
+      },
+      onScaleEnd: (details) {
+        _resetHideTimer();
+      },
       child: Scaffold(
         extendBodyBehindAppBar: true,
         appBar:
             _showAppBar
                 ? PreferredSize(
-                  preferredSize: Size.fromHeight(70),
+                  preferredSize: Size.fromHeight(isLandscape ? 60 : 70),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(
+                    padding: EdgeInsets.symmetric(
                       horizontal: 5.0,
-                      vertical: 10.0,
+                      vertical: isLandscape ? 5.0 : 10.0,
                     ),
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(24),
+                      borderRadius: BorderRadius.circular(
+                        isLandscape ? 16 : 24,
+                      ),
                       child: Container(
                         decoration: BoxDecoration(
                           color: colorScheme.primary.withOpacity(0.7),
@@ -296,17 +337,20 @@ class _PdfReaderPageState extends State<PdfReaderPage> {
                         child: AppBar(
                           backgroundColor: Colors.transparent,
                           elevation: 0,
-                          title: const Text(
+                          title: Text(
                             'PDF Reader',
                             style: TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
-                              fontSize: 24,
+                              fontSize: isLandscape ? 20 : 24,
                               letterSpacing: 1.2,
                             ),
                           ),
                           centerTitle: true,
-                          iconTheme: IconThemeData(color: Colors.white),
+                          iconTheme: IconThemeData(
+                            color: Colors.white,
+                            size: isLandscape ? 20 : 24,
+                          ),
                           actions: [
                             IconButton(
                               icon: Icon(Icons.search, color: Colors.white),
@@ -386,33 +430,33 @@ class _PdfReaderPageState extends State<PdfReaderPage> {
                             child: Container(
                               width: width,
                               height: height,
-                              child: FittedBox(
-                                fit: BoxFit.contain,
-                                child: SizedBox(
-                                  width: width / _zoomLevel,
-                                  height: height / _zoomLevel,
-                                  child: Card(
-                                    elevation: 8,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(24),
-                                    ),
-                                    color:
-                                        _nightMode
-                                            ? Colors.black
-                                            : Colors.white.withOpacity(0.95),
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(24),
-                                      child: SfPdfViewer.file(
-                                        File(widget.filePath),
-                                        controller: _pdfController,
-                                        canShowScrollHead: true,
-                                        canShowScrollStatus: true,
-                                        pageLayoutMode:
-                                            PdfPageLayoutMode.continuous,
-                                        scrollDirection:
-                                            PdfScrollDirection.vertical,
-                                      ),
-                                    ),
+                              child: Card(
+                                elevation: 8,
+                                margin: EdgeInsets.all(isLandscape ? 4 : 8),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    isLandscape ? 12 : 24,
+                                  ),
+                                ),
+                                color:
+                                    _nightMode
+                                        ? Colors.black
+                                        : Colors.white.withOpacity(0.95),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(
+                                    isLandscape ? 12 : 24,
+                                  ),
+                                  child: SfPdfViewer.file(
+                                    File(widget.filePath),
+                                    controller: _pdfController,
+                                    canShowScrollHead: true,
+                                    canShowScrollStatus: true,
+                                    pageLayoutMode:
+                                        PdfPageLayoutMode.continuous,
+                                    scrollDirection:
+                                        PdfScrollDirection.vertical,
+                                    enableDoubleTapZooming: true,
+                                    interactionMode: PdfInteractionMode.pan,
                                   ),
                                 ),
                               ),
@@ -434,89 +478,43 @@ class _PdfReaderPageState extends State<PdfReaderPage> {
                   opacity: _showToolbar ? 1.0 : 0.0,
                   duration: Duration(milliseconds: 300),
                   child: Container(
-                    margin: const EdgeInsets.all(16),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
+                    margin: EdgeInsets.all(isLandscape ? 8 : 16),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isLandscape ? 12 : 16,
+                      vertical: isLandscape ? 6 : 8,
                     ),
                     decoration: BoxDecoration(
                       color:
                           _nightMode
                               ? Colors.grey[900]!.withOpacity(0.95)
                               : Colors.white.withOpacity(0.95),
-                      borderRadius: BorderRadius.circular(24),
+                      borderRadius: BorderRadius.circular(
+                        isLandscape ? 16 : 24,
+                      ),
                       boxShadow: [
                         BoxShadow(color: Colors.black26, blurRadius: 8),
                       ],
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        IconButton(
-                          icon: Icon(Icons.zoom_in, color: colorScheme.primary),
-                          onPressed: () {
-                            _zoomIn();
-                            _resetHideTimer();
-                          },
-                          tooltip: 'Zoom In',
-                        ),
-                        IconButton(
-                          icon: Icon(
-                            Icons.zoom_out,
-                            color: colorScheme.secondary,
-                          ),
-                          onPressed: () {
-                            _zoomOut();
-                            _resetHideTimer();
-                          },
-                          tooltip: 'Zoom Out',
-                        ),
-                        IconButton(
-                          icon: Icon(
-                            Icons.bookmark,
-                            color: colorScheme.primary,
-                          ),
-                          onPressed: () {
-                            _bookmark();
-                            _resetHideTimer();
-                          },
-                          tooltip: 'Bookmark',
-                        ),
-                        IconButton(
-                          icon: Icon(
-                            Icons.settings,
-                            color: colorScheme.secondary,
-                          ),
-                          onPressed: () {
-                            _showSettings();
-                            _resetHideTimer();
-                          },
-                          tooltip: 'Settings',
-                        ),
-                        IconButton(
-                          icon: Icon(
-                            Icons.nightlight_round,
-                            color: colorScheme.primary,
-                          ),
-                          onPressed: () {
-                            _toggleNightMode();
-                            _resetHideTimer();
-                          },
-                          tooltip: 'Night Mode',
-                        ),
-                        IconButton(
-                          icon: Icon(
-                            Icons.rotate_90_degrees_ccw,
-                            color: colorScheme.secondary,
-                          ),
-                          onPressed: () {
-                            _rotate();
-                            _resetHideTimer();
-                          },
-                          tooltip: 'Rotate',
-                        ),
-                      ],
-                    ),
+                    child:
+                        isLandscape
+                            ? SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceEvenly,
+                                children: _buildToolbarButtons(
+                                  colorScheme,
+                                  isLandscape,
+                                ),
+                              ),
+                            )
+                            : Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: _buildToolbarButtons(
+                                colorScheme,
+                                isLandscape,
+                              ),
+                            ),
                   ),
                 ),
               ),
@@ -524,5 +522,76 @@ class _PdfReaderPageState extends State<PdfReaderPage> {
         ),
       ),
     );
+  }
+
+  List<Widget> _buildToolbarButtons(ColorScheme colorScheme, bool isLandscape) {
+    final iconSize = isLandscape ? 20.0 : 24.0;
+
+    return [
+      IconButton(
+        icon: Icon(Icons.zoom_in, color: colorScheme.primary, size: iconSize),
+        onPressed: () {
+          _zoomIn();
+          _resetHideTimer();
+        },
+        tooltip: 'Zoom In',
+      ),
+      IconButton(
+        icon: Icon(
+          Icons.zoom_out,
+          color: colorScheme.secondary,
+          size: iconSize,
+        ),
+        onPressed: () {
+          _zoomOut();
+          _resetHideTimer();
+        },
+        tooltip: 'Zoom Out',
+      ),
+      IconButton(
+        icon: Icon(Icons.bookmark, color: colorScheme.primary, size: iconSize),
+        onPressed: () {
+          _bookmark();
+          _resetHideTimer();
+        },
+        tooltip: 'Bookmark',
+      ),
+      IconButton(
+        icon: Icon(
+          Icons.settings,
+          color: colorScheme.secondary,
+          size: iconSize,
+        ),
+        onPressed: () {
+          _showSettings();
+          _resetHideTimer();
+        },
+        tooltip: 'Settings',
+      ),
+      IconButton(
+        icon: Icon(
+          Icons.nightlight_round,
+          color: colorScheme.primary,
+          size: iconSize,
+        ),
+        onPressed: () {
+          _toggleNightMode();
+          _resetHideTimer();
+        },
+        tooltip: 'Night Mode',
+      ),
+      IconButton(
+        icon: Icon(
+          Icons.rotate_90_degrees_ccw,
+          color: colorScheme.secondary,
+          size: iconSize,
+        ),
+        onPressed: () {
+          _rotate();
+          _resetHideTimer();
+        },
+        tooltip: 'Rotate',
+      ),
+    ];
   }
 }
