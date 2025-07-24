@@ -7,7 +7,7 @@ import '../database_helper.dart';
 import '../features/pdf_reader.dart';
 
 class RecentPdfsPage extends StatefulWidget {
-  const RecentPdfsPage({Key? key}) : super(key: key);
+  const RecentPdfsPage({super.key});
 
   @override
   State<RecentPdfsPage> createState() => _RecentPdfsPageState();
@@ -192,12 +192,12 @@ class _RecentPdfsPageState extends State<RecentPdfsPage> {
                               ),
                               leading: CircleAvatar(
                                 backgroundColor: Colors.red[100],
+                                radius: 28,
                                 child: Icon(
                                   Icons.picture_as_pdf,
                                   color: Colors.red[700],
                                   size: 30,
                                 ),
-                                radius: 28,
                               ),
                               title: Text(
                                 pdf.filePath.split('/').last,
