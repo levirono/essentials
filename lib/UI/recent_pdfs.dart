@@ -14,6 +14,7 @@ class RecentPdfsPage extends StatefulWidget {
 }
 
 class _RecentPdfsPageState extends State<RecentPdfsPage> {
+  // ignore: unused_field
   late Future<List<RecentPdf>> _recentPdfsFuture;
   String _searchQuery = '';
   List<RecentPdf> _allPdfs = [];
@@ -56,6 +57,7 @@ class _RecentPdfsPageState extends State<RecentPdfsPage> {
                   tooltip: 'Share',
                   onPressed: () async {
                     Navigator.pop(context);
+                    // ignore: deprecated_member_use
                     await Share.shareXFiles([XFile(pdf.filePath)]);
                   },
                 ),
