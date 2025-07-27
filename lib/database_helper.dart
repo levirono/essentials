@@ -2,6 +2,7 @@ import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
+import 'dart:convert';
 
 class RecentPdf {
   final int? id;
@@ -35,6 +36,42 @@ class RecentPdf {
   }
 }
 
+class AnalyzedSentence {
+  final int? id;
+  final String text;
+  final Map<String, dynamic> analysisResults;
+  final DateTime analyzedAt;
+  final String? title; // Optional title for the analysis
+
+  AnalyzedSentence({
+    this.id,
+    required this.text,
+    required this.analysisResults,
+    required this.analyzedAt,
+    this.title,
+  });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'text': text,
+      'analysisResults': jsonEncode(analysisResults),
+      'analyzedAt': analyzedAt.toIso8601String(),
+      'title': title,
+    };
+  }
+
+  factory AnalyzedSentence.fromMap(Map<String, dynamic> map) {
+    return AnalyzedSentence(
+      id: map['id'],
+      text: map['text'],
+      analysisResults: jsonDecode(map['analysisResults']),
+      analyzedAt: DateTime.parse(map['analyzedAt']),
+      title: map['title'],
+    );
+  }
+}
+
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
   factory DatabaseHelper() => _instance;
@@ -51,7 +88,12 @@ class DatabaseHelper {
   Future<Database> _initDatabase() async {
     final documentsDirectory = await getApplicationDocumentsDirectory();
     final path = join(documentsDirectory.path, 'essentials.db');
-    return await openDatabase(path, version: 1, onCreate: _onCreate);
+    return await openDatabase(
+      path, 
+      version: 2, 
+      onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
+    );
   }
 
   Future _onCreate(Database db, int version) async {
@@ -79,6 +121,29 @@ class DatabaseHelper {
         imageData TEXT NOT NULL
       )
     ''');
+    await db.execute('''
+      CREATE TABLE analyzed_sentences (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        text TEXT NOT NULL,
+        analysisResults TEXT NOT NULL,
+        analyzedAt TEXT NOT NULL,
+        title TEXT
+      )
+    ''');
+  }
+
+  Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      await db.execute('''
+        CREATE TABLE analyzed_sentences (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          text TEXT NOT NULL,
+          analysisResults TEXT NOT NULL,
+          analyzedAt TEXT NOT NULL,
+          title TEXT
+        )
+      ''');
+    }
   }
 
   Future<void> insertOrUpdateRecentPdf(RecentPdf pdf) async {
@@ -145,7 +210,7 @@ class DatabaseHelper {
     int page,
     String imageData,
   ) async {
-    final db = await database;
+    final db = await database;  
     await db.insert('extracted_images', {
       'filePath': filePath,
       'page': page,
@@ -160,5 +225,60 @@ class DatabaseHelper {
       where: 'filePath = ?',
       whereArgs: [filePath],
     );
+  }
+
+  // Analyzed sentences methods
+  Future<int> insertAnalyzedSentence(AnalyzedSentence sentence) async {
+    final db = await database;
+    return await db.insert('analyzed_sentences', sentence.toMap());
+  }
+
+  Future<List<AnalyzedSentence>> getRecentAnalyzedSentences({int limit = 20}) async {
+    final db = await database;
+    final maps = await db.query(
+      'analyzed_sentences',
+      orderBy: 'analyzedAt DESC',
+      limit: limit,
+    );
+    return maps.map((map) => AnalyzedSentence.fromMap(map)).toList();
+  }
+
+  Future<AnalyzedSentence?> getAnalyzedSentenceById(int id) async {
+    final db = await database;
+    final maps = await db.query(
+      'analyzed_sentences',
+      where: 'id = ?',
+      whereArgs: [id],
+      limit: 1,
+    );
+    if (maps.isNotEmpty) {
+      return AnalyzedSentence.fromMap(maps.first);
+    }
+    return null;
+  }
+
+  Future<void> deleteAnalyzedSentence(int id) async {
+    final db = await database;
+    await db.delete(
+      'analyzed_sentences',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<void> clearAllAnalyzedSentences() async {
+    final db = await database;
+    await db.delete('analyzed_sentences');
+  }
+
+  Future<List<AnalyzedSentence>> searchAnalyzedSentences(String query) async {
+    final db = await database;
+    final maps = await db.query(
+      'analyzed_sentences',
+      where: 'text LIKE ? OR title LIKE ?',
+      whereArgs: ['%$query%', '%$query%'],
+      orderBy: 'analyzedAt DESC',
+    );
+    return maps.map((map) => AnalyzedSentence.fromMap(map)).toList();
   }
 }
