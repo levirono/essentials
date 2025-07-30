@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'dart:ui'; // Added for ImageFilter
-import 'dart:math';
-import '../database_helper.dart';
 
 class SentenceAnalyzerPage extends StatefulWidget {
   @override
@@ -11,12 +9,8 @@ class SentenceAnalyzerPage extends StatefulWidget {
 class _SentenceAnalyzerPageState extends State<SentenceAnalyzerPage>
     with TickerProviderStateMixin {
   final TextEditingController _textController = TextEditingController();
-  final TextEditingController _titleController = TextEditingController();
-  final DatabaseHelper _databaseHelper = DatabaseHelper();
   Map<String, dynamic> _analysisResults = {};
-  List<AnalyzedSentence> _recentAnalyses = [];
   bool _isAnalyzing = false;
-  bool _showRecentAnalyses = false;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
 
@@ -30,54 +24,13 @@ class _SentenceAnalyzerPageState extends State<SentenceAnalyzerPage>
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
-    _loadRecentAnalyses();
   }
 
   @override
   void dispose() {
     _textController.dispose();
-    _titleController.dispose();
     _animationController.dispose();
     super.dispose();
-  }
-
-  Future<void> _loadRecentAnalyses() async {
-    try {
-      final analyses = await _databaseHelper.getRecentAnalyzedSentences(limit: 10);
-      setState(() {
-        _recentAnalyses = analyses;
-      });
-    } catch (e) {
-      print('Error loading recent analyses: $e');
-    }
-  }
-
-  Future<void> _saveAnalysis(String text, Map<String, dynamic> results) async {
-    try {
-      final sentence = AnalyzedSentence(
-        text: text,
-        analysisResults: results,
-        analyzedAt: DateTime.now(),
-        title: _titleController.text.trim().isEmpty ? null : _titleController.text.trim(),
-      );
-      
-      await _databaseHelper.insertAnalyzedSentence(sentence);
-      await _loadRecentAnalyses();
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Analysis saved successfully!'),
-          backgroundColor: Colors.green,
-        ),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error saving analysis: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
   }
 
   void _analyzeSentence() async {
@@ -107,9 +60,6 @@ class _SentenceAnalyzerPageState extends State<SentenceAnalyzerPage>
     });
 
     _animationController.forward();
-    
-    // Auto-save the analysis
-    await _saveAnalysis(text, results);
   }
 
   Map<String, dynamic> _performAnalysis(String text) {
@@ -163,15 +113,6 @@ class _SentenceAnalyzerPageState extends State<SentenceAnalyzerPage>
           ..sort((a, b) => b.value.compareTo(a.value));
     final topWords = sortedWords.take(5).toList();
 
-    // Enhanced analysis features
-    final sentimentScore = _analyzeSentiment(text);
-    final readabilityScore = _calculateReadabilityScore(words, sentences);
-    final languagePatterns = _analyzeLanguagePatterns(text);
-    final paragraphCount = _countParagraphs(text);
-    final averageSentenceLength = sentences.isNotEmpty ? words.length / sentences.length : 0;
-    final lexicalDiversity = uniqueWords.length / words.length;
-    final keywordDensity = _calculateKeywordDensity(wordFrequency, words.length);
-
     return {
       'wordCount': words.where((w) => w.isNotEmpty).length,
       'uniqueWords': uniqueWords.length,
@@ -180,16 +121,9 @@ class _SentenceAnalyzerPageState extends State<SentenceAnalyzerPage>
       'vowelCount': vowels,
       'consonantCount': consonants,
       'sentenceCount': sentences.length,
-      'paragraphCount': paragraphCount,
       'averageWordLength': averageWordLength,
-      'averageSentenceLength': averageSentenceLength,
       'readingTimeSeconds': estimatedReadingTime,
       'complexityScore': complexityScore,
-      'sentimentScore': sentimentScore,
-      'readabilityScore': readabilityScore,
-      'lexicalDiversity': lexicalDiversity,
-      'languagePatterns': languagePatterns,
-      'keywordDensity': keywordDensity,
       'topWords': topWords,
       'wordFrequency': wordFrequency,
     };
@@ -230,123 +164,6 @@ class _SentenceAnalyzerPageState extends State<SentenceAnalyzerPage>
       1.0,
       10.0,
     );
-  }
-
-  Map<String, dynamic> _analyzeSentiment(String text) {
-    // Simple sentiment analysis based on word lists
-    final positiveWords = ['good', 'great', 'excellent', 'amazing', 'wonderful', 'fantastic', 'love', 'like', 'happy', 'joy', 'beautiful', 'perfect', 'awesome', 'brilliant', 'outstanding'];
-    final negativeWords = ['bad', 'terrible', 'awful', 'horrible', 'hate', 'dislike', 'sad', 'angry', 'disappointed', 'frustrated', 'annoying', 'disgusting', 'worst', 'pathetic', 'useless'];
-    
-    final words = text.toLowerCase().replaceAll(RegExp(r'[^\w\s]'), '').split(RegExp(r'\s+'));
-    
-    int positiveCount = 0;
-    int negativeCount = 0;
-    
-    for (String word in words) {
-      if (positiveWords.contains(word)) positiveCount++;
-      if (negativeWords.contains(word)) negativeCount++;
-    }
-    
-    final totalSentimentWords = positiveCount + negativeCount;
-    double sentimentScore = 0.5; // Neutral
-    String sentiment = 'Neutral';
-    
-    if (totalSentimentWords > 0) {
-      sentimentScore = positiveCount / totalSentimentWords;
-      if (sentimentScore > 0.6) {
-        sentiment = 'Positive';
-      } else if (sentimentScore < 0.4) {
-        sentiment = 'Negative';
-      }
-    }
-    
-    return {
-      'score': sentimentScore,
-      'label': sentiment,
-      'positiveWords': positiveCount,
-      'negativeWords': negativeCount,
-    };
-  }
-
-  double _calculateReadabilityScore(List<String> words, List<String> sentences) {
-    // Simplified Flesch Reading Ease Score
-    if (words.isEmpty || sentences.isEmpty) return 0.0;
-    
-    final avgSentenceLength = words.length / sentences.length;
-    final avgSyllables = words.map(_countSyllables).reduce((a, b) => a + b) / words.length;
-    
-    final score = 206.835 - (1.015 * avgSentenceLength) - (84.6 * avgSyllables);
-    return score.clamp(0.0, 100.0);
-  }
-
-  int _countSyllables(String word) {
-    // Simple syllable counting heuristic
-    final vowels = 'aeiouAEIOU';
-    int count = 0;
-    bool previousWasVowel = false;
-    
-    for (int i = 0; i < word.length; i++) {
-      bool isVowel = vowels.contains(word[i]);
-      if (isVowel && !previousWasVowel) {
-        count++;
-      }
-      previousWasVowel = isVowel;
-    }
-    
-    // Handle silent 'e'
-    if (word.endsWith('e') && count > 1) {
-      count--;
-    }
-    
-    return max(1, count); // Every word has at least one syllable
-  }
-
-  Map<String, dynamic> _analyzeLanguagePatterns(String text) {
-    final questionMarks = text.split('?').length - 1;
-    final exclamationMarks = text.split('!').length - 1;
-    final periods = text.split('.').length - 1;
-    final commas = text.split(',').length - 1;
-    final semicolons = text.split(';').length - 1;
-    final colons = text.split(':').length - 1;
-    
-    // Detect writing style patterns
-    final hasQuestions = questionMarks > 0;
-    final hasExclamations = exclamationMarks > 0;
-    final isDialogue = text.contains('"') || text.contains("'");
-    final hasNumbers = RegExp(r'\d').hasMatch(text);
-    final hasCapitalWords = RegExp(r'\b[A-Z]{2,}\b').hasMatch(text);
-    
-    return {
-      'questionMarks': questionMarks,
-      'exclamationMarks': exclamationMarks,
-      'periods': periods,
-      'commas': commas,
-      'semicolons': semicolons,
-      'colons': colons,
-      'hasQuestions': hasQuestions,
-      'hasExclamations': hasExclamations,
-      'isDialogue': isDialogue,
-      'hasNumbers': hasNumbers,
-      'hasCapitalWords': hasCapitalWords,
-    };
-  }
-
-  int _countParagraphs(String text) {
-    return text.split(RegExp(r'\n\s*\n')).where((p) => p.trim().isNotEmpty).length;
-  }
-
-  Map<String, double> _calculateKeywordDensity(Map<String, int> wordFrequency, int totalWords) {
-    final keywords = <String, double>{};
-    final sortedWords = wordFrequency.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
-    
-    for (var entry in sortedWords.take(10)) {
-      if (entry.key.length > 3) { // Only consider words longer than 3 characters
-        keywords[entry.key] = (entry.value / totalWords) * 100;
-      }
-    }
-    
-    return keywords;
   }
 
   void _clearText() {
