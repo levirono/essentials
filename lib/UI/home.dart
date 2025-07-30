@@ -1,8 +1,12 @@
 import 'package:essentials/UI/sentence_analyzer.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
-import '../features/pdf_reader.dart';
 import 'package:share_plus/share_plus.dart';
+import '../features/pdf_reader.dart';
+import '../features/focus_timer.dart';
+import '../features/mood_journal.dart';
+import '../features/brain_teasers.dart';
+import '../features/mind_map.dart';
 // import 'notes/notes_page.dart';
 // import 'todos/todo_page.dart';
 // import 'community/cummunity_page.dart';
@@ -11,6 +15,7 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
       backgroundColor: colorScheme.background,
       appBar: AppBar(
@@ -66,8 +71,10 @@ class HomePage extends StatelessWidget {
                           ),
                         ),
                         SizedBox(height: 24),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        Wrap(
+                          alignment: WrapAlignment.center,
+                          spacing: 24,
+                          runSpacing: 24,
                           children: [
                             _buildFeatureButton(
                               context,
@@ -85,6 +92,30 @@ class HomePage extends StatelessWidget {
                               context,
                               Icons.text_snippet,
                               'Sentence Analyzer',
+                              colorScheme,
+                            ),
+                            _buildFeatureButton(
+                              context,
+                              Icons.timer,
+                              'Focus Timer',
+                              colorScheme,
+                            ),
+                            _buildFeatureButton(
+                              context,
+                              Icons.emoji_emotions,
+                              'Mood Journal',
+                              colorScheme,
+                            ),
+                            _buildFeatureButton(
+                              context,
+                              Icons.videogame_asset,
+                              'Brain Teasers',
+                              colorScheme,
+                            ),
+                            _buildFeatureButton(
+                              context,
+                              Icons.map,
+                              'Mind Map',
                               colorScheme,
                             ),
                           ],
@@ -127,7 +158,7 @@ class HomePage extends StatelessWidget {
                         ),
                       ),
                     ),
-                    SizedBox(width: 16),
+                    SizedBox(width: 16),  
                     Expanded(
                       child: ElevatedButton.icon(
                         onPressed: () async {
@@ -215,8 +246,29 @@ class HomePage extends StatelessWidget {
                     builder: (context) => SentenceAnalyzerPage(),
                   ),
                 );
+              } else if (label == 'Focus Timer') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => FocusTimer()),
+                );
+              } else if (label == 'Mood Journal') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => DailyJournal()),
+                );
+              } else if (label == 'Brain Teasers') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => BrainTeasers()),
+                );
+              } else if (label == 'Mind Map') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => MindMap()),
+                );
+              } else {
+                // Handle Notes and Tasks pages when implemented
               }
-              // Add navigation for Notes and Tasks as needed
             },
             child: Padding(
               padding: const EdgeInsets.all(20),
