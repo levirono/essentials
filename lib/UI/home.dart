@@ -264,7 +264,7 @@ class HomePage extends StatelessWidget {
               } else if (label == 'Mind Map') {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => MindMap()),
+                  MaterialPageRoute(builder: (context) => MindMapPage()),
                 );
               } else {
                 // Handle Notes and Tasks pages when implemented
