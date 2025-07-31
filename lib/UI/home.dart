@@ -249,7 +249,7 @@ class HomePage extends StatelessWidget {
               } else if (label == 'Focus Timer') {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => FocusTimer()),
+                  MaterialPageRoute(builder: (context) => FocusTimerPage()),
                 );
               } else if (label == 'Mood Journal') {
                 Navigator.push(
