@@ -89,8 +89,8 @@ class DatabaseHelper {
     final documentsDirectory = await getApplicationDocumentsDirectory();
     final path = join(documentsDirectory.path, 'essentials.db');
     return await openDatabase(
-      path, 
-      version: 2, 
+      path,
+      version: 2,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -130,6 +130,15 @@ class DatabaseHelper {
         title TEXT
       )
     ''');
+    await db.execute('''
+      CREATE TABLE mind_maps (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        data TEXT NOT NULL,
+        createdAt TEXT NOT NULL,
+        updatedAt TEXT NOT NULL
+      )
+    ''');
   }
 
   Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
@@ -144,6 +153,70 @@ class DatabaseHelper {
         )
       ''');
     }
+    if (oldVersion < 3) {
+      await db.execute('''
+        CREATE TABLE mind_maps (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          title TEXT NOT NULL,
+          data TEXT NOT NULL,
+          createdAt TEXT NOT NULL,
+          updatedAt TEXT NOT NULL
+        )
+      ''');
+    }
+  }
+
+  // Mind Map methods
+  Future<int> insertMindMap(String title, Map<String, dynamic> data) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+    return await db.insert('mind_maps', {
+      'title': title,
+      'data': jsonEncode(data),
+      'createdAt': now,
+      'updatedAt': now,
+    });
+  }
+
+  Future<int> updateMindMap(
+    int id,
+    String title,
+    Map<String, dynamic> data,
+  ) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+    return await db.update(
+      'mind_maps',
+      {'title': title, 'data': jsonEncode(data), 'updatedAt': now},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> getMindMaps() async {
+    final db = await database;
+    return await db.query('mind_maps', orderBy: 'updatedAt DESC');
+  }
+
+  Future<Map<String, dynamic>?> getMindMapById(int id) async {
+    final db = await database;
+    final maps = await db.query('mind_maps', where: 'id = ?', whereArgs: [id]);
+    if (maps.isNotEmpty) {
+      final map = maps.first;
+      return {
+        'id': map['id'],
+        'title': map['title'],
+        'data': jsonDecode(map['data'] as String),
+        'createdAt': map['createdAt'],
+        'updatedAt': map['updatedAt'],
+      };
+    }
+    return null;
+  }
+
+  Future<void> deleteMindMap(int id) async {
+    final db = await database;
+    await db.delete('mind_maps', where: 'id = ?', whereArgs: [id]);
   }
 
   Future<void> insertOrUpdateRecentPdf(RecentPdf pdf) async {
@@ -210,7 +283,7 @@ class DatabaseHelper {
     int page,
     String imageData,
   ) async {
-    final db = await database;  
+    final db = await database;
     await db.insert('extracted_images', {
       'filePath': filePath,
       'page': page,
