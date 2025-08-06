@@ -189,21 +189,12 @@ class _MindMapPageState extends State<MindMapPage> {
         tooltip: 'Add Node',
       ),
       body: GestureDetector(
-        onPanStart: (details) {
-          if (_drawingMode) {
-            setState(() {
-              _currentLine = [details.localPosition];
-            });
-          } else {
-            _startNodeDrag(details.localPosition);
-          }
-        },
         onPanUpdate: (details) {
           if (_drawingMode) {
             setState(() {
               _currentLine.add(details.localPosition);
             });
-          } else {
+          } else if (_draggingNodeIdx != null) {
             _updateNodeDrag(details.localPosition, details.delta);
           }
         },
@@ -214,7 +205,7 @@ class _MindMapPageState extends State<MindMapPage> {
               _drawings.add(List<Offset>.from(_currentLine));
               _currentLine.clear();
             });
-          } else {
+          } else if (_draggingNodeIdx != null) {
             _endNodeDrag();
           }
         },
@@ -233,6 +224,7 @@ class _MindMapPageState extends State<MindMapPage> {
             ..._nodes.asMap().entries.map((entry) {
               final idx = entry.key;
               final node = entry.value;
+              final isDragging = _draggingNodeIdx == idx;
               return Positioned(
                 left: node.offset.dx,
                 top: node.offset.dy,
@@ -252,15 +244,22 @@ class _MindMapPageState extends State<MindMapPage> {
                     }
                   },
                   onDoubleTap: () => _addNode(idx),
-                  onLongPress: () => _showNodeMenu(idx),
+                  onLongPressStart: (details) {
+                    setState(() {
+                      _draggingNodeIdx = idx;
+                      _dragStartOffset = details.localPosition - node.offset;
+                    });
+                  },
                   child: Container(
                     width: 100,
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       color:
-                          _connectMode && _firstConnectIdx == idx
-                              ? Colors.orange[200]
-                              : Colors.green[100],
+                          isDragging
+                              ? Colors.yellow[200]
+                              : (_connectMode && _firstConnectIdx == idx
+                                  ? Colors.orange[200]
+                                  : Colors.green[100]),
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
@@ -286,16 +285,6 @@ class _MindMapPageState extends State<MindMapPage> {
   // Node drag helpers
   int? _draggingNodeIdx;
   Offset? _dragStartOffset;
-  void _startNodeDrag(Offset pos) {
-    for (int i = 0; i < _nodes.length; i++) {
-      if ((pos - _nodes[i].offset).distance < 50) {
-        _draggingNodeIdx = i;
-        _dragStartOffset = pos - _nodes[i].offset;
-        break;
-      }
-    }
-  }
-
   void _updateNodeDrag(Offset pos, Offset delta) {
     if (_draggingNodeIdx != null) {
       setState(() {
