@@ -181,6 +181,52 @@ class _MindMapPageState extends State<MindMapPage> {
                 ),
             tooltip: 'Recent Mind Maps',
           ),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert),
+            tooltip: 'Advanced Tools',
+            onSelected: (value) {
+              switch (value) {
+                case 'Export Image':
+                  _showExportImageDialog();
+                  break;
+                case 'Clear All':
+                  _showClearAllDialog();
+                  break;
+                case 'Center Nodes':
+                  _centerNodes();
+                  break;
+                case 'Export JSON':
+                  _showExportJsonDialog();
+                  break;
+                case 'Import JSON':
+                  _showImportJsonDialog();
+                  break;
+              }
+            },
+            itemBuilder:
+                (context) => [
+                  const PopupMenuItem(
+                    value: 'Export Image',
+                    child: Text('Export as Image'),
+                  ),
+                  const PopupMenuItem(
+                    value: 'Clear All',
+                    child: Text('Clear All'),
+                  ),
+                  const PopupMenuItem(
+                    value: 'Center Nodes',
+                    child: Text('Center Nodes'),
+                  ),
+                  const PopupMenuItem(
+                    value: 'Export JSON',
+                    child: Text('Export as JSON'),
+                  ),
+                  const PopupMenuItem(
+                    value: 'Import JSON',
+                    child: Text('Import from JSON'),
+                  ),
+                ],
+          ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
@@ -189,6 +235,7 @@ class _MindMapPageState extends State<MindMapPage> {
         tooltip: 'Add Node',
       ),
       body: GestureDetector(
+        // ...existing code...
         onPanUpdate: (details) {
           if (_drawingMode) {
             setState(() {
@@ -430,6 +477,19 @@ class _MindMapPageState extends State<MindMapPage> {
       _mindMapId = null;
     }
   }
+  
+  void _centerNodes() {}
+  
+  void _showExportJsonDialog() {}
+  
+  void _showImportJsonDialog() {}
+  
+}
+
+void _showClearAllDialog() {
+}
+
+void _showExportImageDialog() {
 }
 
 class MindMapNode {
