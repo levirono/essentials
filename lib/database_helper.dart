@@ -254,6 +254,36 @@ class DatabaseHelper {
     );
   }
 
+  // Analyzed Sentence methods
+  Future<int> insertAnalyzedSentence({
+    required String text,
+    required Map<String, dynamic> analysisResults,
+    String? title,
+  }) async {
+    final db = await database;
+    final now = DateTime.now();
+    
+    final analyzedSentence = AnalyzedSentence(
+      text: text,
+      analysisResults: analysisResults,
+      analyzedAt: now,
+      title: title,
+    );
+    
+    return await db.insert('analyzed_sentences', analyzedSentence.toMap());
+  }
+
+  Future<List<AnalyzedSentence>> getAnalyzedSentences() async {
+    final db = await database;
+    final maps = await db.query('analyzed_sentences', orderBy: 'analyzedAt DESC');
+    return maps.map((map) => AnalyzedSentence.fromMap(map)).toList();
+  }
+
+  Future<void> deleteAnalyzedSentence(int id) async {
+    final db = await database;
+    await db.delete('analyzed_sentences', where: 'id = ?', whereArgs: [id]);
+  }
+
   // Highlight methods
   Future<void> insertHighlight(
     String filePath,

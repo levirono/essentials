@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:ui'; // Added for ImageFilter
+import '../database_helper.dart'; // Add this import
 
 class SentenceAnalyzerPage extends StatefulWidget {
   @override
@@ -60,6 +61,137 @@ class _SentenceAnalyzerPageState extends State<SentenceAnalyzerPage>
     });
 
     _animationController.forward();
+
+    // Save analysis results to database
+    await _saveAnalysisResults(text, results);
+  }
+
+  Future<void> _saveAnalysisResults(String text, Map<String, dynamic> results) async {
+    try {
+      final dbHelper = DatabaseHelper();
+      final title = text.length > 50 ? '${text.substring(0, 50)}...' : text;
+      
+      await dbHelper.insertAnalyzedSentence(
+        text: text,
+        analysisResults: results,
+        title: title,
+      );
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Analysis saved successfully!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      print('Error saving analysis: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to save analysis: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void _viewSavedAnalyses() async {
+    try {
+      final dbHelper = DatabaseHelper();
+      final savedAnalyses = await dbHelper.getAnalyzedSentences();
+      
+      if (savedAnalyses.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('No saved analyses found'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        return;
+      }
+
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Saved Analyses'),
+          content: Container(
+            width: double.maxFinite,
+            height: 400,
+            child: ListView.builder(
+              itemCount: savedAnalyses.length,
+              itemBuilder: (context, index) {
+                final analysis = savedAnalyses[index];
+                return ListTile(
+                  title: Text(
+                    analysis.title ?? 'Untitled Analysis',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  subtitle: Text(
+                    'Analyzed: ${analysis.analyzedAt.toString().substring(0, 19)}',
+                    style: TextStyle(fontSize: 12),
+                  ),
+                  trailing: IconButton(
+                    icon: Icon(Icons.delete, color: Colors.red),
+                    onPressed: () async {
+                      await dbHelper.deleteAnalyzedSentence(analysis.id!);
+                      Navigator.of(context).pop();
+                      _viewSavedAnalyses(); // Refresh the list
+                    },
+                  ),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    _loadSavedAnalysis(analysis);
+                  },
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('Close'),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      print('Error loading saved analyses: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to load saved analyses: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void _loadSavedAnalysis(AnalyzedSentence analysis) {
+    _textController.text = analysis.text;
+    setState(() {
+      _analysisResults = analysis.analysisResults;
+    });
+    _animationController.forward();
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Analysis loaded successfully!'),
+        backgroundColor: Colors.green,
+      ),
+    );
+  }
+
+  void _saveCurrentAnalysis() async {
+    if (_textController.text.trim().isEmpty || _analysisResults.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('No analysis to save'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    await _saveAnalysisResults(_textController.text.trim(), _analysisResults);
   }
 
   Map<String, dynamic> _performAnalysis(String text) {
@@ -107,11 +239,14 @@ class _SentenceAnalyzerPageState extends State<SentenceAnalyzerPage>
     // Text complexity score (simple heuristic)
     final complexityScore = _calculateComplexityScore(text, words, sentences);
 
-    // Most frequent words (top 5)
+    // Most frequent words (top 5) - Convert to serializable format
     final sortedWords =
         wordFrequency.entries.toList()
           ..sort((a, b) => b.value.compareTo(a.value));
-    final topWords = sortedWords.take(5).toList();
+    final topWords = sortedWords.take(5).map((entry) => {
+      'word': entry.key,
+      'count': entry.value,
+    }).toList();
 
     return {
       'wordCount': words.where((w) => w.isNotEmpty).length,
@@ -338,6 +473,40 @@ class _SentenceAnalyzerPageState extends State<SentenceAnalyzerPage>
                                 ),
                               ),
                             ),
+                            SizedBox(width: 12),
+                            ElevatedButton.icon(
+                              onPressed: _viewSavedAnalyses,
+                              icon: Icon(Icons.history),
+                              label: Text('History'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.blue[600],
+                                foregroundColor: Colors.white,
+                                padding: EdgeInsets.symmetric(
+                                  vertical: 12,
+                                  horizontal: 16,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                            ),
+                            SizedBox(width: 12),
+                            ElevatedButton.icon(
+                              onPressed: _analysisResults.isNotEmpty ? _saveCurrentAnalysis : null,
+                              icon: Icon(Icons.save),
+                              label: Text('Save'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.green[600],
+                                foregroundColor: Colors.white,
+                                padding: EdgeInsets.symmetric(
+                                  vertical: 12,
+                                  horizontal: 16,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                            ),
                           ],
                         ),
                       ],
@@ -486,8 +655,7 @@ class _SentenceAnalyzerPageState extends State<SentenceAnalyzerPage>
 
   Widget _buildWordFrequencyCard() {
     final colorScheme = Theme.of(context).colorScheme;
-    final topWords =
-        _analysisResults['topWords'] as List<MapEntry<String, int>>;
+    final topWords = _analysisResults['topWords'] as List<dynamic>;
 
     return Card(
       elevation: 6,
@@ -509,21 +677,21 @@ class _SentenceAnalyzerPageState extends State<SentenceAnalyzerPage>
             SizedBox(height: 16),
             ...topWords
                 .map(
-                  (entry) => Padding(
+                  (wordData) => Padding(
                     padding: const EdgeInsets.only(bottom: 8.0),
                     child: Row(
                       children: [
                         Expanded(
                           flex: 3,
                           child: Text(
-                            entry.key,
+                            wordData['word'],
                             style: TextStyle(fontWeight: FontWeight.w500),
                           ),
                         ),
                         Expanded(
                           flex: 2,
                           child: LinearProgressIndicator(
-                            value: entry.value / topWords.first.value,
+                            value: wordData['count'] / topWords.first['count'],
                             backgroundColor: Colors.grey[300],
                             valueColor: AlwaysStoppedAnimation<Color>(
                               colorScheme.primary,
@@ -532,7 +700,7 @@ class _SentenceAnalyzerPageState extends State<SentenceAnalyzerPage>
                         ),
                         SizedBox(width: 8),
                         Text(
-                          entry.value.toString(),
+                          wordData['count'].toString(),
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ],
