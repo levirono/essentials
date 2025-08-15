@@ -5,7 +5,7 @@ import 'package:share_plus/share_plus.dart';
 import '../features/pdf_reader.dart';
 import '../features/focus_timer.dart';
 import '../features/mood_journal.dart';
-import '../features/brain_teasers.dart';
+import '../features/brain_teasers_list.dart';
 import '../features/mind_map.dart';
 // import 'notes/notes_page.dart';
 // import 'todos/todo_page.dart';
@@ -259,7 +259,7 @@ class HomePage extends StatelessWidget {
               } else if (label == 'Brain Teasers') {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => BrainTeasers()),
+                  MaterialPageRoute(builder: (context) => BrainTeasersListPage()),
                 );
               } else if (label == 'Mind Map') {
                 Navigator.push(
